@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 from nonebot import get_bot, logger
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Message, MessageSegment
 from nonebot.exception import ActionFailed
-
 from pallas.api.config import BotConfig
 from pallas.core.foundation.db import Message as MessageModel
 from pallas.core.foundation.db import make_message_repository
@@ -63,9 +62,7 @@ def enqueue_drift_payload(key: tuple[int, int], payload: DriftPayload) -> None:
         pass
 
 
-async def deliver_drift_payload(
-    bot_id: int, group_id: int, payload: DriftPayload
-) -> bool:
+async def deliver_drift_payload(bot_id: int, group_id: int, payload: DriftPayload) -> bool:
     key = (bot_id, group_id)
     async with _dream_lock:
         if key not in _dream_active:
@@ -85,8 +82,8 @@ async def stop_dream_worker(bot_id: int, group_id: int) -> None:
             pass
     async with _dream_lock:
         _dream_active.discard(key)
-    from pallas.api.platform import DREAM_HOST_GATE_PLUGIN
     from pallas.api.platform import (
+        DREAM_HOST_GATE_PLUGIN,
         needs_group_host_bot_gate,
         release_group_owned_gate_sync,
     )
@@ -106,21 +103,16 @@ async def stop_dream_worker(bot_id: int, group_id: int) -> None:
                 break
 
 
-async def broadcast_drift(
-    bot_id: int, source_group_id: int, payload: DriftPayload
-) -> None:
+async def broadcast_drift(bot_id: int, source_group_id: int, payload: DriftPayload) -> None:
     """联机梦：仅向「当前也在做梦的其它群」投递；多群时每条随机抽一个接收群。"""
-    from pallas_plugin_dream.shard_fleet import collect_drift_peer_group_ids
     from pallas.core.platform.shard.coord.dream_drift import (
         schedule_publish_dream_drift,
     )
 
+    from pallas_plugin_dream.shard_fleet import collect_drift_peer_group_ids
+
     async with _dream_lock:
-        local_targets = [
-            gid
-            for bid, gid in _dream_active
-            if bid == bot_id and gid != source_group_id
-        ]
+        local_targets = [gid for bid, gid in _dream_active if bid == bot_id and gid != source_group_id]
     targets = await collect_drift_peer_group_ids(bot_id, source_group_id, local_targets)
     if not targets:
         return
@@ -138,9 +130,7 @@ async def send_dream_wake_text(bot_id: int, group_id: int) -> None:
     try:
         bot = get_bot(str(bot_id))
     except Exception as e:
-        logger.debug(
-            f"bot [{bot_id}] dream wake send get_bot failed in group [{group_id}]: {e}"
-        )
+        logger.debug(f"bot [{bot_id}] dream wake send get_bot failed in group [{group_id}]: {e}")
         return
     try:
         await bot.send_group_msg(
@@ -148,9 +138,7 @@ async def send_dream_wake_text(bot_id: int, group_id: int) -> None:
             message=Message(MessageSegment.text(DREAM_WAKE_TEXT)),
         )
     except ActionFailed as e:
-        logger.debug(
-            f"bot [{bot_id}] dream wake send failed in group [{group_id}]: {e}"
-        )
+        logger.debug(f"bot [{bot_id}] dream wake send failed in group [{group_id}]: {e}")
 
 
 async def launch_dream_worker(bot_id: int, group_id: int, duration_sec: int) -> None:
@@ -159,8 +147,8 @@ async def launch_dream_worker(bot_id: int, group_id: int, duration_sec: int) -> 
     cfg = BotConfig(bot_id, group_id)
     await cfg.start_dream(duration_sec)
     until_ts = time.time() + max(1, int(duration_sec))
-    from pallas.api.platform import DREAM_HOST_GATE_PLUGIN
     from pallas.api.platform import (
+        DREAM_HOST_GATE_PLUGIN,
         bind_group_owned_gate_sync,
         needs_group_host_bot_gate,
     )
@@ -170,9 +158,7 @@ async def launch_dream_worker(bot_id: int, group_id: int, duration_sec: int) -> 
 
     schedule_register_dream_active(bot_id, group_id, until_ts)
     if needs_group_host_bot_gate():
-        bind_group_owned_gate_sync(
-            DREAM_HOST_GATE_PLUGIN, group_id, bot_id, gate_sec=float(duration_sec)
-        )
+        bind_group_owned_gate_sync(DREAM_HOST_GATE_PLUGIN, group_id, bot_id, gate_sec=float(duration_sec))
     async with _dream_lock:
         _dream_active.add(key)
     q = get_drift_queue(key)
@@ -194,13 +180,9 @@ async def launch_dream_worker(bot_id: int, group_id: int, duration_sec: int) -> 
                 image_cap=image_cap,
             )
     except ActionFailed as e:
-        logger.debug(
-            f"bot [{bot_id}] dream send failed (immediate tick) in group [{group_id}]: {e}"
-        )
+        logger.debug(f"bot [{bot_id}] dream send failed (immediate tick) in group [{group_id}]: {e}")
     except Exception as e:
-        logger.warning(
-            f"bot [{bot_id}] dream worker immediate tick error in group [{group_id}]: {e}"
-        )
+        logger.warning(f"bot [{bot_id}] dream worker immediate tick error in group [{group_id}]: {e}")
     _dream_tasks[key] = asyncio.create_task(
         _dream_worker_loop(
             bot_id,
@@ -235,9 +217,7 @@ async def _dream_worker_content_tick_once(
     if item and item.image_bytes and sent_images < image_cap:
         ik = dream_image_dedupe_key(item.image_bytes)
         if ik not in sent_image_keys:
-            await _send_group_drift_image(
-                bot, group_id, item.nickname, item.image_bytes
-            )
+            await _send_group_drift_image(bot, group_id, item.nickname, item.image_bytes)
             sent_image_keys.add(ik)
             sent_images += 1
             sent_queue_image = True
@@ -251,13 +231,9 @@ async def _dream_worker_content_tick_once(
     if sent_queue_text or sent_queue_image:
         return sent_images
 
-    prefer_echo = (
-        random.random() < dream_plugin_config.dream_prefer_learned_echo_probability
-    )
+    prefer_echo = random.random() < dream_plugin_config.dream_prefer_learned_echo_probability
     if prefer_echo:
-        if await _dream_tick_try_learned_echo(
-            bot, group_id=group_id, sent_text_keys=sent_text_keys
-        ):
+        if await _dream_tick_try_learned_echo(bot, group_id=group_id, sent_text_keys=sent_text_keys):
             return sent_images
         sent_h, inc = await _dream_tick_try_historical(
             bot,
@@ -284,15 +260,10 @@ async def _dream_worker_content_tick_once(
         sent_images += inc
         if sent_h:
             return sent_images
-        if await _dream_tick_try_learned_echo(
-            bot, group_id=group_id, sent_text_keys=sent_text_keys
-        ):
+        if await _dream_tick_try_learned_echo(bot, group_id=group_id, sent_text_keys=sent_text_keys):
             return sent_images
 
-    if (
-        sent_images < image_cap
-        and random.random() < dream_plugin_config.dream_archive_image_probability
-    ):
+    if sent_images < image_cap and random.random() < dream_plugin_config.dream_archive_image_probability:
         from pallas_plugin_draw.draw_archive import random_archived_png_bytes
 
         for _ in range(_ARCHIVE_RESAMPLE_ATTEMPTS):
@@ -327,11 +298,7 @@ async def _dream_worker_loop(
             drunk_now = (await cfg.drunkenness()) > 0
             do_drunk_synergy = drunk_now and not drunk_synergy_used
             if drunk_now:
-                await asyncio.sleep(
-                    random.uniform(
-                        _DRUNK_DREAM_FAST_SLEEP_MIN, _DRUNK_DREAM_FAST_SLEEP_MAX
-                    )
-                )
+                await asyncio.sleep(random.uniform(_DRUNK_DREAM_FAST_SLEEP_MIN, _DRUNK_DREAM_FAST_SLEEP_MAX))
             else:
                 lo = float(dream_plugin_config.dream_worker_sleep_min_sec)
                 hi = float(dream_plugin_config.dream_worker_sleep_max_sec)
@@ -341,17 +308,13 @@ async def _dream_worker_loop(
             try:
                 bot = get_bot(str(bot_id))
             except Exception as e:
-                logger.debug(
-                    f"bot [{bot_id}] dream worker get_bot failed in group [{group_id}]: {e}"
-                )
+                logger.debug(f"bot [{bot_id}] dream worker get_bot failed in group [{group_id}]: {e}")
                 continue
             if do_drunk_synergy:
                 drunk_synergy_used = True
                 image_cap = _DRUNK_DREAM_IMAGE_CAP
                 try:
-                    taken = await try_drunk_dream_take_name(
-                        bot=bot, bot_id=bot_id, group_id=group_id, cfg=cfg
-                    )
+                    taken = await try_drunk_dream_take_name(bot=bot, bot_id=bot_id, group_id=group_id, cfg=cfg)
                     if taken is not None:
                         victim_id, victim_display = taken
                         await send_one_random_history_line(
@@ -362,13 +325,9 @@ async def _dream_worker_loop(
                             display_name=victim_display,
                         )
                 except ActionFailed as e:
-                    logger.debug(
-                        f"bot [{bot_id}] dream drunk synergy send failed in group [{group_id}]: {e}"
-                    )
+                    logger.debug(f"bot [{bot_id}] dream drunk synergy send failed in group [{group_id}]: {e}")
                 except Exception as e:
-                    logger.warning(
-                        f"bot [{bot_id}] dream drunk synergy error in group [{group_id}]: {e}"
-                    )
+                    logger.warning(f"bot [{bot_id}] dream drunk synergy error in group [{group_id}]: {e}")
                 continue
             try:
                 sent_images = await _dream_worker_content_tick_once(
@@ -382,13 +341,9 @@ async def _dream_worker_loop(
                     image_cap=image_cap,
                 )
             except ActionFailed as e:
-                logger.debug(
-                    f"bot [{bot_id}] dream send failed in group [{group_id}]: {e}"
-                )
+                logger.debug(f"bot [{bot_id}] dream send failed in group [{group_id}]: {e}")
             except Exception as e:
-                logger.warning(
-                    f"bot [{bot_id}] dream worker tick error in group [{group_id}]: {e}"
-                )
+                logger.warning(f"bot [{bot_id}] dream worker tick error in group [{group_id}]: {e}")
         await cfg.stop_dream()
         await send_dream_wake_text(bot_id, group_id)
     except asyncio.CancelledError:
@@ -396,8 +351,8 @@ async def _dream_worker_loop(
     finally:
         async with _dream_lock:
             _dream_active.discard(key)
-        from pallas.api.platform import DREAM_HOST_GATE_PLUGIN
         from pallas.api.platform import (
+            DREAM_HOST_GATE_PLUGIN,
             needs_group_host_bot_gate,
             release_group_owned_gate_sync,
         )
@@ -416,18 +371,12 @@ def drift_at_nickname(nickname: str) -> str:
     return n if n.startswith("@") else f"@{n}"
 
 
-async def _send_group_drift_text(
-    bot: Bot, group_id: int, nickname: str, text: str
-) -> None:
+async def _send_group_drift_text(bot: Bot, group_id: int, nickname: str, text: str) -> None:
     body = f"{drift_at_nickname(nickname)}：{text}"
-    await bot.send_group_msg(
-        group_id=group_id, message=Message(MessageSegment.text(body))
-    )
+    await bot.send_group_msg(group_id=group_id, message=Message(MessageSegment.text(body)))
 
 
-async def _send_group_drift_image(
-    bot: Bot, group_id: int, nickname: str, data: bytes
-) -> None:
+async def _send_group_drift_image(bot: Bot, group_id: int, nickname: str, data: bytes) -> None:
     """跨群漂流图"""
     head = f"{drift_at_nickname(nickname)}："
     await bot.send_group_msg(
@@ -457,21 +406,15 @@ async def _dream_tick_try_historical(
 ) -> tuple[bool, int]:
     """尝试发一条 is_dream 历史。返回 (是否已发送, 本 tick 图片计数增量)。"""
     for _ in range(dream_plugin_config.dream_hist_resample_attempts):
-        hist = await sample_historical_drift(
-            bot_id=bot_id, consumer_group_id=group_id, exclude_group_id=group_id
-        )
+        hist = await sample_historical_drift(bot_id=bot_id, consumer_group_id=group_id, exclude_group_id=group_id)
         if hist is None:
-            hist = await sample_historical_drift(
-                bot_id=bot_id, consumer_group_id=group_id, exclude_group_id=None
-            )
+            hist = await sample_historical_drift(bot_id=bot_id, consumer_group_id=group_id, exclude_group_id=None)
         if hist is None:
             break
         if hist.image_bytes and sent_images < image_cap:
             ik = dream_image_dedupe_key(hist.image_bytes)
             if ik not in sent_image_keys:
-                await _send_group_drift_image(
-                    bot, group_id, hist.nickname, hist.image_bytes
-                )
+                await _send_group_drift_image(bot, group_id, hist.nickname, hist.image_bytes)
                 sent_image_keys.add(ik)
                 await register_recent_drift_dedupe_key(group_id, ik)
                 return True, 1
@@ -514,11 +457,7 @@ async def log_dream_chat_to_db(
     if not plain:
         plain = " "
     is_plain = "[CQ:" not in event.raw_message
-    nick_source = (
-        nick
-        if nick is not None
-        else event.sender.card or event.sender.nickname or str(event.user_id)
-    )
+    nick_source = nick if nick is not None else event.sender.card or event.sender.nickname or str(event.user_id)
     nick = nick_source.strip() or str(event.user_id)
     m = MessageModel.model_construct(
         group_id=event.group_id,
@@ -533,6 +472,4 @@ async def log_dream_chat_to_db(
     try:
         await message_repo.bulk_insert([m])
     except Exception as e:
-        logger.debug(
-            f"bot [{event.self_id}] dream message db insert failed in group [{event.group_id}]: {e}"
-        )
+        logger.debug(f"bot [{event.self_id}] dream message db insert failed in group [{event.group_id}]: {e}")

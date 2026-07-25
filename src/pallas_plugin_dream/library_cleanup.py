@@ -4,7 +4,6 @@ import re
 import time
 
 from nonebot import logger
-
 from pallas.core.foundation.db import get_db_backend
 
 from .history_bottle import DREAM_KEY_PREFIX
@@ -36,9 +35,8 @@ async def _mongo_delete_expired(cutoff: int) -> int:
 
 
 async def _pg_delete_expired(cutoff: int) -> int:
-    from sqlalchemy import delete
-
     from pallas.core.foundation.db.repository_pg import MessageRow, get_session
+    from sqlalchemy import delete
 
     try:
         async with get_session() as session:

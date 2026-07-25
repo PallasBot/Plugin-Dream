@@ -5,15 +5,13 @@ from __future__ import annotations
 import asyncio
 
 from nonebot import get_bots
-
 from pallas.core.platform.shard import context as shard_ctx
 
 
 def dream_history_bot_ids(process_fallback_self_id: int) -> list[int]:
     """参与历史梦库采样的牛牛 QQ；分片时为全集群在线 catalog，单进程为本进程连接。"""
     if shard_ctx.sharding_active():
-        from pallas.api.platform import get_catalog_bot_ids
-        from pallas.api.platform import get_cluster_online_bot_ids
+        from pallas.api.platform import get_catalog_bot_ids, get_cluster_online_bot_ids
 
         ids = set(get_catalog_bot_ids()) & set(get_cluster_online_bot_ids())
     else:

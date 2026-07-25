@@ -7,25 +7,26 @@ from nonebot.adapters.onebot.v11 import GroupMessageEvent, permission
 from nonebot.exception import ActionFailed
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import Rule
-
+from pallas.api.config import BotConfig, GroupConfig
 from pallas.api.metadata import (
     PLUGIN_EXTRA_VERSION,
     PLUGIN_HOMEPAGE,
     PLUGIN_MENU_TEMPLATE,
-)
-from pallas.api.metadata import (
     SCENE_AUTO,
     SCENE_GROUP,
     join_usage,
     usage_line,
 )
-from pallas.api.safety import is_message_scrub_blocked_async
-from pallas.api.safety import scrub_intercept_log_preview
-from pallas.api.config import BotConfig, GroupConfig
 from pallas.api.platform import dream_session_ingress_passes
+from pallas.api.safety import (
+    is_message_scrub_blocked_async,
+    scrub_intercept_log_preview,
+)
 from pallas.product.llm.knowledge.declare import knowledge_source_row
 
-from . import ban_handlers as _dream_ban_handlers  # noqa: F401 — 注册梦库「不可以」/撤回清理
+from . import (
+    ban_handlers as _dream_ban_handlers,  # noqa: F401 — 注册梦库「不可以」/撤回清理
+)
 from .capture_filter import dream_capture_blocked_by_substrings
 from .http_utils import download_image_url
 from .payload import DriftPayload
@@ -41,11 +42,12 @@ from .runtime import (
 
 @get_driver().on_startup
 async def _register_dream_plugin_coord() -> None:
+    from pallas.core.plugin_coord.dream import register_dream_coord
+
     from pallas_plugin_dream.payload import (
         drift_payload_from_dict,
         drift_payload_to_dict,
     )
-    from pallas.core.plugin_coord.dream import register_dream_coord
 
     register_dream_coord(
         drift_payload_to_dict=drift_payload_to_dict,
@@ -132,18 +134,12 @@ __plugin_meta__ = PluginMetadata(
                     },
                     {
                         "title": "如何醒梦",
-                        "content": (
-                            "发送「牛牛醒梦」或「牛牛别做梦」结束做梦；"
-                            "「牛牛醒一醒」醒酒时也会一并醒梦。"
-                        ),
+                        "content": ("发送「牛牛醒梦」或「牛牛别做梦」结束做梦；「牛牛醒一醒」醒酒时也会一并醒梦。"),
                         "keywords": "醒梦,别做梦,醒一醒,结束",
                     },
                     {
                         "title": "梦库清理",
-                        "content": (
-                            "回复某条消息后 @牛牛 说「不可以」，"
-                            "可删除梦库中匹配内容（群管向）。"
-                        ),
+                        "content": ("回复某条消息后 @牛牛 说「不可以」，可删除梦库中匹配内容（群管向）。"),
                         "keywords": "不可以,清理,删除,梦库",
                     },
                 ],
@@ -153,9 +149,7 @@ __plugin_meta__ = PluginMetadata(
 )
 
 
-_PLAIN_TRIGGERS = frozenset(
-    {"牛牛做梦", "牛牛醒梦", "牛牛别做梦", "牛牛醒一醒", "牛牛别喝了"}
-)
+_PLAIN_TRIGGERS = frozenset({"牛牛做梦", "牛牛醒梦", "牛牛别做梦", "牛牛醒一醒", "牛牛别喝了"})
 DREAM_GROUP_COOLDOWN_KEY = "dream"
 DREAM_GROUP_COOLDOWN_SEC = 10
 
@@ -188,9 +182,7 @@ async def _(event: GroupMessageEvent):
     except ActionFailed:
         pass
     await launch_dream_worker(event.self_id, event.group_id, duration)
-    logger.info(
-        f"bot [{event.self_id}] dream started in group [{event.group_id}] for {duration} sec"
-    )
+    logger.info(f"bot [{event.self_id}] dream started in group [{event.group_id}] for {duration} sec")
 
 
 async def is_dream_wake(event: GroupMessageEvent) -> bool:
@@ -253,16 +245,12 @@ async def _(event: GroupMessageEvent):
             f"user [{event.user_id}] msg_id [{event.message_id}] preview [{pv}]"
         )
         return
-    nick = (
-        event.sender.card or event.sender.nickname or str(event.user_id)
-    ).strip() or str(event.user_id)
+    nick = (event.sender.card or event.sender.nickname or str(event.user_id)).strip() or str(event.user_id)
 
     try:
         await log_dream_chat_to_db(event, plain=plain, nick=nick)
     except Exception as e:
-        logger.debug(
-            f"bot [{event.self_id}] dream capture db insert failed in group [{event.group_id}]: {e}"
-        )
+        logger.debug(f"bot [{event.self_id}] dream capture db insert failed in group [{event.group_id}]: {e}")
 
     async def drift_job():
         try:
@@ -290,8 +278,6 @@ async def _(event: GroupMessageEvent):
                     DriftPayload(nickname=nick, text=plain),
                 )
         except Exception as e:
-            logger.debug(
-                f"bot [{event.self_id}] dream capture drift job failed in group [{event.group_id}]: {e}"
-            )
+            logger.debug(f"bot [{event.self_id}] dream capture drift job failed in group [{event.group_id}]: {e}")
 
     asyncio.create_task(drift_job())

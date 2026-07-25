@@ -1,8 +1,7 @@
 from typing import Self
 
-from pydantic import BaseModel, Field, model_validator
-
 from pallas.api.config import install_hot_reload_config, plugin_config_proxy
+from pydantic import BaseModel, Field, model_validator
 
 
 class Config(BaseModel, extra="ignore"):

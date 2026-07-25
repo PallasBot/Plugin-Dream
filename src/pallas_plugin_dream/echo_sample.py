@@ -69,13 +69,12 @@ async def _mongo_sample() -> str | None:
 
 
 async def _pg_sample() -> str | None:
-    from sqlalchemy import func, not_, select
-
     from pallas.core.foundation.db.repository_pg import (
         ContextAnswerMessageRow,
         MessageRow,
         get_session,
     )
+    from sqlalchemy import func, not_, select
 
     try:
         async with get_session() as session:
