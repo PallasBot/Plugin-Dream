@@ -17,7 +17,7 @@ from pallas.api.metadata import (
     join_usage,
     usage_line,
 )
-from pallas.api.platform import dream_session_ingress_passes
+from pallas.api.platform import dream_session_ingress_passes, llm_command_tool_row
 from pallas.api.safety import (
     is_message_scrub_blocked_async,
     scrub_intercept_log_preview,
@@ -72,6 +72,8 @@ __plugin_meta__ = PluginMetadata(
         "version": PLUGIN_EXTRA_VERSION,
         "menu_template": PLUGIN_MENU_TEMPLATE,
         "command_permissions": [
+            {"id": "dream.start", "label": "牛牛做梦", "default": "everyone"},
+            {"id": "dream.wake", "label": "牛牛醒梦 / 牛牛别做梦", "default": "everyone"},
             {
                 "id": "dream.ban_cleanup",
                 "label": "梦库清理（不可以）",
@@ -79,7 +81,25 @@ __plugin_meta__ = PluginMetadata(
             },
         ],
         "command_limits": [
+            {"id": "dream.start", "cd_sec": 5},
+            {"id": "dream.wake", "cd_sec": 3},
             {"id": "dream.ban_cleanup", "cd_sec": 3},
+        ],
+        "llm_tools": [
+            llm_command_tool_row(
+                name="dream.start",
+                command_id="dream.start",
+                description="让牛牛进入做梦漂流。用户明确要求做梦、说梦话时使用。",
+                parameters={"type": "object", "properties": {}},
+                command_template="牛牛做梦",
+            ),
+            llm_command_tool_row(
+                name="dream.wake",
+                command_id="dream.wake",
+                description="结束本群做梦。用户要求醒梦、别做梦时使用。",
+                parameters={"type": "object", "properties": {}},
+                command_template="牛牛醒梦",
+            ),
         ],
         "menu_data": [
             {
@@ -87,6 +107,7 @@ __plugin_meta__ = PluginMetadata(
                 "trigger_method": "on_message",
                 "trigger_scene": SCENE_GROUP,
                 "trigger_condition": "牛牛做梦",
+                "command_permission": "dream.start",
                 "brief_des": "进入做梦漂流",
                 "detail_des": (
                     "持续约 5～15 分钟；可收到他群漂流、历史梦话或图片。"
@@ -98,6 +119,7 @@ __plugin_meta__ = PluginMetadata(
                 "trigger_method": "on_message",
                 "trigger_scene": SCENE_GROUP,
                 "trigger_condition": "牛牛醒梦 / 牛牛别做梦",
+                "command_permission": "dream.wake",
                 "brief_des": "结束做梦",
                 "detail_des": "立即停止梦话；也可通过「牛牛醒一醒」醒酒时一并结束。",
             },
