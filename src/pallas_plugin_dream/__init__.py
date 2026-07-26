@@ -92,6 +92,7 @@ __plugin_meta__ = PluginMetadata(
                 description="让牛牛进入做梦漂流。用户明确要求做梦、说梦话时使用。",
                 parameters={"type": "object", "properties": {}},
                 command_template="牛牛做梦",
+                hints=["做梦", "说梦话", "进入做梦"],
             ),
             llm_command_tool_row(
                 name="dream.wake",
@@ -99,6 +100,7 @@ __plugin_meta__ = PluginMetadata(
                 description="结束本群做梦。用户要求醒梦、别做梦时使用。",
                 parameters={"type": "object", "properties": {}},
                 command_template="牛牛醒梦",
+                hints=["醒梦", "别做梦", "结束做梦"],
             ),
         ],
         "menu_data": [
