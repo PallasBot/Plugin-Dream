@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+## [4.0.15] - 2026-07-26
+
+- feat(config): WebUI 配置字段增加 ui_group 分组与 ui_order 排序
+
+
 ## [4.0.14] - 2026-07-26
 
 - fix: 将 handler 用到的 `Bot` / `T_State` 改为运行时导入，避免 NoneBot 依赖注入解析失败导致插件无法加载
