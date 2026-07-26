@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 
 from nonebot import logger, on_message, on_notice
+from nonebot.adapters import Bot  # noqa: TC002  # NoneBot 依赖解析需要运行时可见
 from nonebot.adapters.onebot.v11 import (
     GroupMessageEvent,
     GroupRecallNoticeEvent,
@@ -11,6 +11,7 @@ from nonebot.adapters.onebot.v11 import (
 )
 from nonebot.exception import ActionFailed
 from nonebot.rule import Rule
+from nonebot.typing import T_State  # noqa: TC002  # NoneBot 依赖解析需要运行时可见
 from pallas.api.commands import (
     event_has_reply_target,
     event_targets_self,
@@ -21,10 +22,6 @@ from pallas.api.utils import try_convert_to_cqcode
 
 from .ban_ack_state import DREAM_BAN_ACK_SENT_STATE_KEY
 from .ban_cleanup import delete_dream_messages_from_ban_reply
-
-if TYPE_CHECKING:
-    from nonebot.adapters import Bot
-    from nonebot.typing import T_State
 
 _BAN_ACK_TEXT = "这对角可能会不小心撞倒些家具，我会尽量小心。"
 
