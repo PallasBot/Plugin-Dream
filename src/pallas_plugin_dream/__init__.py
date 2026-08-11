@@ -55,6 +55,7 @@ async def _register_dream_plugin_coord() -> None:
         drift_payload_from_dict=drift_payload_from_dict,
         deliver_drift_payload=deliver_drift_payload,
     )
+    logger.info(format_plugin_event("ready", "Registered dream drift coords"))
 
 
 __plugin_meta__ = PluginMetadata(
