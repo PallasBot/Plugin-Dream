@@ -384,7 +384,7 @@ async def _send_group_drift_text(bot: Bot, group_id: int, nickname: str, text: s
     logger.info(
         format_plugin_event(
             "drift_delivered",
-            f"Bot [{bot.self_id}] delivered a dream drift to group [{group_id}] (text)",
+            f"Bot [{bot.self_id}] delivered a text dream drift to group [{group_id}]",
         )
     )
 
@@ -399,7 +399,7 @@ async def _send_group_drift_image(bot: Bot, group_id: int, nickname: str, data: 
     logger.info(
         format_plugin_event(
             "drift_delivered",
-            f"Bot [{bot.self_id}] delivered a dream drift to group [{group_id}] (image)",
+            f"Bot [{bot.self_id}] delivered an image dream drift to group [{group_id}]",
         )
     )
 
