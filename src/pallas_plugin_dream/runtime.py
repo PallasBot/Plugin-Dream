@@ -9,6 +9,7 @@ from nonebot import get_bot, logger
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Message, MessageSegment
 from nonebot.exception import ActionFailed
 from pallas.api.config import BotConfig
+from pallas.api.logging import format_plugin_event
 from pallas.core.foundation.db import Message as MessageModel
 from pallas.core.foundation.db import make_message_repository
 
@@ -346,6 +347,12 @@ async def _dream_worker_loop(
                 logger.warning(f"bot [{bot_id}] dream worker tick error in group [{group_id}]: {e}")
         await cfg.stop_dream()
         await send_dream_wake_text(bot_id, group_id)
+        logger.info(
+            format_plugin_event(
+                "dream_end",
+                f"Bot [{bot_id}] finished dreaming in group [{group_id}]",
+            )
+        )
     except asyncio.CancelledError:
         raise
     finally:
@@ -374,6 +381,12 @@ def drift_at_nickname(nickname: str) -> str:
 async def _send_group_drift_text(bot: Bot, group_id: int, nickname: str, text: str) -> None:
     body = f"{drift_at_nickname(nickname)}：{text}"
     await bot.send_group_msg(group_id=group_id, message=Message(MessageSegment.text(body)))
+    logger.info(
+        format_plugin_event(
+            "drift_delivered",
+            f"Bot [{bot.self_id}] delivered a dream drift to group [{group_id}] (text)",
+        )
+    )
 
 
 async def _send_group_drift_image(bot: Bot, group_id: int, nickname: str, data: bytes) -> None:
@@ -383,6 +396,12 @@ async def _send_group_drift_image(bot: Bot, group_id: int, nickname: str, data: 
         group_id=group_id,
         message=MessageSegment.text(head) + MessageSegment.image(data),
     )
+    logger.info(
+        format_plugin_event(
+            "drift_delivered",
+            f"Bot [{bot.self_id}] delivered a dream drift to group [{group_id}] (image)",
+        )
+    )
 
 
 async def _send_group_archived_draw_image(bot: Bot, group_id: int, data: bytes) -> None:
@@ -391,6 +410,12 @@ async def _send_group_archived_draw_image(bot: Bot, group_id: int, data: bytes) 
     await bot.send_group_msg(
         group_id=group_id,
         message=MessageSegment.text(head) + MessageSegment.image(data),
+    )
+    logger.info(
+        format_plugin_event(
+            "drift_delivered",
+            f"Bot [{bot.self_id}] delivered an archived draw image to group [{group_id}]",
+        )
     )
 
 

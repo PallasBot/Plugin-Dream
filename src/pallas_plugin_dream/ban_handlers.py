@@ -17,6 +17,7 @@ from pallas.api.commands import (
     event_targets_self,
     extract_reply_id_from_raw_message,
 )
+from pallas.api.logging import format_plugin_event
 from pallas.api.perm import group_message_permission_for_command
 from pallas.api.utils import try_convert_to_cqcode
 
@@ -99,7 +100,10 @@ async def _(_bot: Bot, event: GroupMessageEvent, state: T_State):
     )
     if n:
         logger.info(
-            f"bot [{event.self_id}] removed {n} dream record(s) via admin ban reply in group [{event.group_id}]"
+            format_plugin_event(
+                "dream_cleanup",
+                f"Bot [{event.self_id}] removed {n} dream record(s) in group [{event.group_id}] via admin ban reply",
+            )
         )
         state[DREAM_BAN_ACK_SENT_STATE_KEY] = True
         try:
@@ -155,7 +159,12 @@ async def _(bot: Bot, event: GroupRecallNoticeEvent, state: T_State):
         reply_plain=reply_plain,
     )
     if n:
-        logger.info(f"bot [{event.self_id}] removed {n} dream record(s) via admin recall in group [{event.group_id}]")
+        logger.info(
+            format_plugin_event(
+                "dream_cleanup",
+                f"Bot [{event.self_id}] removed {n} dream record(s) in group [{event.group_id}] via admin recall",
+            )
+        )
         state[DREAM_BAN_ACK_SENT_STATE_KEY] = True
         try:
             await bot.send_group_msg(group_id=event.group_id, message=_BAN_ACK_TEXT)

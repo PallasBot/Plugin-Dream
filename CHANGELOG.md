@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+- feat(logging): 补充做梦会话、漂流投递与梦库清理业务事件日志
+
 ## [4.0.16] - 2026-07-26
 
 - feat(llm_tools): 为口令工具补充口语 hints

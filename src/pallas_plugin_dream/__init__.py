@@ -8,6 +8,7 @@ from nonebot.exception import ActionFailed
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import Rule
 from pallas.api.config import BotConfig, GroupConfig
+from pallas.api.logging import format_plugin_event
 from pallas.api.metadata import (
     PLUGIN_EXTRA_VERSION,
     PLUGIN_HOMEPAGE,
@@ -207,7 +208,12 @@ async def _(event: GroupMessageEvent):
     except ActionFailed:
         pass
     await launch_dream_worker(event.self_id, event.group_id, duration)
-    logger.info(f"bot [{event.self_id}] dream started in group [{event.group_id}] for {duration} sec")
+    logger.info(
+        format_plugin_event(
+            "dream_start",
+            f"Bot [{event.self_id}] started dreaming in group [{event.group_id}] for {duration} sec",
+        )
+    )
 
 
 async def is_dream_wake(event: GroupMessageEvent) -> bool:
@@ -232,6 +238,12 @@ async def _(event: GroupMessageEvent):
     await config.stop_dream()
     await stop_dream_worker(event.self_id, event.group_id)
     await send_dream_wake_text(event.self_id, event.group_id)
+    logger.info(
+        format_plugin_event(
+            "dream_wake",
+            f"Bot [{event.self_id}] woke up in group [{event.group_id}]",
+        )
+    )
 
 
 async def is_dream_capture(event: GroupMessageEvent) -> bool:
