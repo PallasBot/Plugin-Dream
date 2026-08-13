@@ -8,7 +8,7 @@ from nonebot.exception import ActionFailed
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import Rule
 from pallas.api.config import BotConfig, GroupConfig
-from pallas.api.logging import format_plugin_event
+from pallas.api.logging import format_plugin_event, register_plugin_startup_ready
 from pallas.api.metadata import (
     PLUGIN_EXTRA_VERSION,
     PLUGIN_HOMEPAGE,
@@ -55,7 +55,7 @@ async def _register_dream_plugin_coord() -> None:
         drift_payload_from_dict=drift_payload_from_dict,
         deliver_drift_payload=deliver_drift_payload,
     )
-    logger.info(format_plugin_event("ready", "Registered dream drift coords"))
+    register_plugin_startup_ready("dream", detail="做梦漂流协调器注册完成")
 
 
 __plugin_meta__ = PluginMetadata(

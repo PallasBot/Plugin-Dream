@@ -30,7 +30,7 @@ async def _mongo_delete_expired(cutoff: int) -> int:
         r = await coll.delete_many(q)
         return int(r.deleted_count)
     except Exception as e:
-        logger.warning(f"dream library cleanup mongo delete_many failed: {e}")
+        logger.warning("梦库定时清理失败，MongoDB 批量删除异常：{}", e)
         return 0
 
 
@@ -48,5 +48,5 @@ async def _pg_delete_expired(cutoff: int) -> int:
             await session.commit()
             return int(r.rowcount or 0)
     except Exception as e:
-        logger.warning(f"dream library cleanup pg delete failed: {e}")
+        logger.warning("梦库定时清理失败，PostgreSQL 批量删除异常：{}", e)
         return 0

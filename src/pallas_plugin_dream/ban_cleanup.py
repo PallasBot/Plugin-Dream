@@ -69,7 +69,7 @@ async def _mongo_delete(bot_ids: list[int], raw_norm: str, plains: set[str]) -> 
         r = await coll.delete_many(q)
         return int(r.deleted_count)
     except Exception as e:
-        logger.debug(f"bot [{bot_ids[0]}] dream ban cleanup mongo delete_many failed: {e}")
+        logger.debug("梦库「不可以」清理失败，bot [{}] MongoDB 删除异常：{}", bot_ids[0], e)
         return 0
 
 
@@ -97,5 +97,5 @@ async def _pg_delete(bot_ids: list[int], raw_norm: str, plains: set[str]) -> int
             await session.commit()
             return int(r.rowcount or 0)
     except Exception as e:
-        logger.debug(f"bot [{bot_ids[0]}] dream ban cleanup pg delete failed: {e}")
+        logger.debug("梦库「不可以」清理失败，bot [{}] PostgreSQL 删除异常：{}", bot_ids[0], e)
         return 0

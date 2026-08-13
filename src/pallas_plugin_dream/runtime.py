@@ -12,6 +12,7 @@ from pallas.api.config import BotConfig
 from pallas.api.logging import format_plugin_event
 from pallas.core.foundation.db import Message as MessageModel
 from pallas.core.foundation.db import make_message_repository
+from pallas.core.foundation.logging import log_rate_limited
 
 from .config import plugin_config as dream_plugin_config
 from .dedupe_keys import dream_image_dedupe_key, dream_text_dedupe_key
@@ -57,6 +58,12 @@ def enqueue_drift_payload(key: tuple[int, int], payload: DriftPayload) -> None:
             q.get_nowait()
         except asyncio.QueueEmpty:
             pass
+        log_rate_limited(
+            logger,
+            "warning",
+            "dream_drift_queue_full",
+            f"Bot [{key[0]}] dropped the oldest dream drift payload for group [{key[1]}], queue was full",
+        )
     try:
         q.put_nowait(payload)
     except asyncio.QueueFull:
@@ -116,6 +123,12 @@ async def broadcast_drift(bot_id: int, source_group_id: int, payload: DriftPaylo
         local_targets = [gid for bid, gid in _dream_active if bid == bot_id and gid != source_group_id]
     targets = await collect_drift_peer_group_ids(bot_id, source_group_id, local_targets)
     if not targets:
+        log_rate_limited(
+            logger,
+            "info",
+            "dream_drift_no_target",
+            f"Bot [{bot_id}] found no active peer group for a dream drift from group [{source_group_id}]",
+        )
         return
     gid = random.choice(sorted(targets))
     key = (bot_id, gid)
