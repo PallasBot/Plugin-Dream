@@ -3,6 +3,10 @@
 本文件依据 git tag 历史整理，版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 新提交合入后请在 `## [Unreleased]` 下记录，发布时随版本 tag 归档。
 
+## [4.0.20] - 2026-08-14
+
+- refactor(log): 梦库清理运维日志改中文，漂流投递补日志
+
 ## [4.0.19] - 2026-08-11
 
 - feat(logging): 补充启动 ready 日志
