@@ -108,6 +108,7 @@ __plugin_meta__ = PluginMetadata(
         "menu_data": [
             {
                 "func": "牛牛做梦",
+                "group": "梦境控制",
                 "trigger_method": "on_message",
                 "trigger_scene": SCENE_GROUP,
                 "trigger_condition": "牛牛做梦",
@@ -120,6 +121,7 @@ __plugin_meta__ = PluginMetadata(
             },
             {
                 "func": "牛牛醒梦",
+                "group": "梦境控制",
                 "trigger_method": "on_message",
                 "trigger_scene": SCENE_GROUP,
                 "trigger_condition": "牛牛醒梦 / 牛牛别做梦",
@@ -129,6 +131,7 @@ __plugin_meta__ = PluginMetadata(
             },
             {
                 "func": "梦话与漂流",
+                "group": "梦境内容",
                 "trigger_method": "on_message",
                 "trigger_scene": SCENE_AUTO,
                 "trigger_condition": "本群做梦中",
@@ -137,6 +140,7 @@ __plugin_meta__ = PluginMetadata(
             },
             {
                 "func": "梦库清理",
+                "group": "梦库管理",
                 "trigger_method": "on_message",
                 "trigger_scene": SCENE_GROUP,
                 "trigger_condition": "@牛牛 回复某条消息：不可以",
